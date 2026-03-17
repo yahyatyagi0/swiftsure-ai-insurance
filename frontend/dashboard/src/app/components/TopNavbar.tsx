@@ -1,0 +1,41 @@
+import { Search, Bell, User } from 'lucide-react';
+
+export function TopNavbar() {
+  return (
+    <div className="bg-white border-b border-gray-200 h-16 fixed top-0 right-0 left-64 z-10">
+      <div className="h-full px-6 flex items-center justify-between">
+        {/* Search Bar */}
+        <div className="flex-1 max-w-xl">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search policies, claims, workers..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Right Side - Notifications & Profile */}
+        <div className="flex items-center gap-4">
+          {/* Notifications */}
+          <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <Bell className="w-5 h-5 text-gray-700" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-[#EF4444] rounded-full"></span>
+          </button>
+
+          {/* Profile */}
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">Ravi Kumar</p>
+              <p className="text-xs text-gray-500">Gig Worker</p>
+            </div>
+            <div className="w-10 h-10 bg-gradient-to-br from-[#2563EB] to-[#1e40af] rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
