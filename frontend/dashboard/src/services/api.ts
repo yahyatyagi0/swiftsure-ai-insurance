@@ -1,5 +1,5 @@
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+  import.meta.env.VITE_API_BASE_URL || "https://swiftsure-ai-insurance.onrender.com";
 
 export async function getWorkerProfile() {
   const res = await fetch(`${API_BASE}/worker-profile`);
