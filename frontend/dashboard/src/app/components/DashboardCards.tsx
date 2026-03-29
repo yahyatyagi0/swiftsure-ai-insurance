@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { getWorkerProfile, getRiskScore, getFraudCheck } from "../../services/api";
+import { Brain } from "lucide-react";
 
 type WorkerProfile = {
   name: string;
@@ -13,6 +14,7 @@ type RiskScore = {
   risk_score: number;
   risk_level: string;
   recommended_premium: number;
+  ai_insight: string;
 };
 
 type FraudCheck = {
@@ -20,10 +22,9 @@ type FraudCheck = {
   risk_level: string;
 };
 
-function getAiInsight(score: number | null) {
-  if (score === null) return "";
-  if (score < 30) return "Low risk → Premium optimized";
-  return "High risk → Monitoring required";
+function getSafetyScore(riskScore: number | null): number {
+  if (riskScore === null) return 0;
+  return Math.round(Math.max(0, Math.min(100, 100 - riskScore)));
 }
 
 export function DashboardCards() {
@@ -82,8 +83,7 @@ export function DashboardCards() {
   }
 
   const riskScoreNumber = risk?.risk_score ?? null;
-  const insightText = getAiInsight(riskScoreNumber);
-  const isLowRisk = riskScoreNumber !== null && riskScoreNumber < 30;
+  const safetyScore = getSafetyScore(riskScoreNumber);
 
   const formattedLastUpdated = lastUpdated
     ? lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -93,7 +93,7 @@ export function DashboardCards() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <p className="text-sm text-gray-500">Dashboard summary</p>
+          <p className="text-sm text-gray-500">Dashboard Summary</p>
           {formattedLastUpdated ? (
             <p className="text-xs text-gray-400">Last updated: {formattedLastUpdated}</p>
           ) : null}
@@ -105,7 +105,7 @@ export function DashboardCards() {
             onClick={() => setRefreshKey((key) => key + 1)}
             className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
           >
-            🔄 Refresh data
+            🔄 Refresh Data
           </button>
 
           <button
@@ -117,44 +117,89 @@ export function DashboardCards() {
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
-            {autoRefresh ? "⏸ Auto-refresh" : "▶️ Auto-refresh"}
+            {autoRefresh ? "⏸ Auto-Refresh" : "▶️ Auto-Refresh"}
           </button>
         </div>
       </div>
 
+      {/* AI Insight Banner */}
+      {risk?.ai_insight && (
+        <Card className="p-4 shadow-sm border border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-start gap-3">
+            <Brain className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                AI Insight
+              </p>
+              <p className="text-sm text-gray-700 mt-1">{risk.ai_insight}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Top Section: Worker Profile, Risk Score, Safety Score */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="p-6 shadow-md border border-gray-200 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-4">Worker Profile</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">👤 Worker Profile</h3>
           <p className="text-lg font-bold text-gray-900">{worker?.name ?? "—"}</p>
-          <p className="text-sm text-gray-500">Status: {worker?.policy_status ?? "—"}</p>
+          <p className="text-sm text-gray-500 mt-2">Status: {worker?.policy_status ?? "—"}</p>
           <p className="text-sm text-gray-500">
             Weekly Premium: ₹{worker?.weekly_premium ?? "—"}
           </p>
         </Card>
 
         <Card className="p-6 shadow-md border border-gray-200 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-4">Risk Score</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">⚠️ Risk Score</h3>
           <p className="text-3xl font-bold text-blue-600">
             {risk?.risk_score ?? "—"}
           </p>
-          <p className="text-sm text-gray-500">Risk Level: {risk?.risk_level ?? "—"}</p>
-          <p
-            className={`text-sm font-medium mt-2 ${
-              isLowRisk ? "text-emerald-600" : "text-rose-600"
-            }`}
-          >
-            {insightText}
+          <p className="text-sm text-gray-500 mt-2">
+            Level: <span className="font-semibold">{risk?.risk_level ?? "—"}</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-3">
+            Premium: {risk?.recommended_premium ?? "—"}
           </p>
         </Card>
 
         <Card className="p-6 shadow-md border border-gray-200 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-4">Fraud Risk</h3>
-          <p className="text-3xl font-bold text-red-600">
-            {fraud?.fraud_probability ?? "—"}
+          <h3 className="font-semibold text-gray-900 mb-4">🛡️ Safety Score</h3>
+          <p className="text-3xl font-bold text-emerald-600">{safetyScore}</p>
+          <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                safetyScore >= 70
+                  ? "bg-emerald-500"
+                  : safetyScore >= 40
+                  ? "bg-amber-500"
+                  : "bg-red-500"
+              }`}
+              style={{ width: `${safetyScore}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {safetyScore >= 70
+              ? "Excellent"
+              : safetyScore >= 40
+              ? "Moderate"
+              : "High Risk"}
           </p>
-          <p className="text-sm text-gray-500">Risk Level: {fraud?.risk_level ?? "—"}</p>
         </Card>
       </div>
+
+      {/* Fraud Risk Card */}
+      <Card className="p-6 shadow-md border border-gray-200 rounded-xl">
+        <h3 className="font-semibold text-gray-900 mb-4">🔍 Fraud Detection</h3>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Fraud Probability</p>
+            <p className="text-3xl font-bold text-red-600">{fraud?.fraud_probability ?? "—"}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Risk Level</p>
+            <p className="text-lg font-semibold text-gray-900">{fraud?.risk_level ?? "—"}</p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

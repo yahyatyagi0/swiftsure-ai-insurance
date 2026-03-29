@@ -16,9 +16,21 @@ export async function getFraudCheck() {
   return res.json();
 }
 
-export async function submitClaim() {
+export async function getAiRecommendations() {
+  const res = await fetch(`${API_BASE}/ai-recommendations`);
+  return res.json();
+}
+
+export async function getRiskPrediction() {
+  const res = await fetch(`${API_BASE}/risk-prediction`);
+  return res.json();
+}
+
+export async function submitClaim(amount: number = 5000, description: string = "Insurance claim") {
   const res = await fetch(`${API_BASE}/submit-claim`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount, description }),
   });
   return res.json();
 }
