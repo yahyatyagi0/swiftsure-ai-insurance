@@ -17,9 +17,9 @@ import {
   Legend,
 } from "recharts";
 
-type RiskTrendPoint = { month: string; score: number };
+type RiskTrendPoint = { month: string; avg_risk: number };
 type FraudPoint = { month: string; probability: number };
-type WorkerActivityPoint = { day: string; tasks: number };
+type WorkerActivityPoint = { day: string; hours_logged: number };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
@@ -48,7 +48,7 @@ export function RiskTrendAnalytics() {
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            <Area type="monotone" dataKey="score" stroke="#2563EB" fill="#60A5FA" />
+            <Area type="monotone" dataKey="avg_risk" stroke="#2563EB" fill="#60A5FA" />
           </AreaChart>
         </ResponsiveContainer>
       )}
@@ -119,7 +119,7 @@ export function WorkerActivityAnalytics() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="tasks" fill="#34D399" />
+            <Bar dataKey="hours_logged" fill="#34D399" />
           </BarChart>
         </ResponsiveContainer>
       )}

@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 type ClaimAnalysisData = {
   claim_id: string;
   fraud_risk: number;
-  claim_decision: string;
+  decision: string;
   ai_analysis: string;
 };
 
@@ -49,13 +49,13 @@ const getDecisionTextColor = (decision: string) => {
 
 export function ClaimAnalysisCard({ data }: { data: ClaimAnalysisData }) {
   return (
-    <Card className={`p-6 shadow-md border rounded-xl ${getDecisionColor(data.claim_decision)}`}>
+    <Card className={`p-6 shadow-md border rounded-xl ${getDecisionColor(data.decision)}`}>
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-semibold text-gray-900">Claim Analysis</h3>
           <p className="text-xs text-gray-500 mt-1">ID: {data.claim_id}</p>
         </div>
-        {getDecisionIcon(data.claim_decision)}
+        {getDecisionIcon(data.decision)}
       </div>
 
       <div className="space-y-3">
@@ -63,8 +63,8 @@ export function ClaimAnalysisCard({ data }: { data: ClaimAnalysisData }) {
           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
             AI Decision
           </p>
-          <p className={`text-lg font-bold mt-1 ${getDecisionTextColor(data.claim_decision)}`}>
-            {data.claim_decision}
+          <p className={`text-lg font-bold mt-1 ${getDecisionTextColor(data.decision)}`}>
+            {data.decision}
           </p>
         </div>
 

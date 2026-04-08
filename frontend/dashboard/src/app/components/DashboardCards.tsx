@@ -20,6 +20,7 @@ type RiskScore = {
 type FraudCheck = {
   fraud_probability: string;
   risk_level: string;
+  ai_reason: string;
 };
 
 function getSafetyScore(riskScore: number | null): number {
@@ -69,7 +70,7 @@ export function DashboardCards() {
   if (loading) {
     return (
       <Card className="p-6 shadow-md border border-gray-200 rounded-xl">
-        <p className="text-sm text-gray-600">🤖 AI Analyzing Worker Data...</p>
+        <p className="text-sm text-gray-600">🤖 AI analyzing real-time worker data...</p>
       </Card>
     );
   }
@@ -199,6 +200,14 @@ export function DashboardCards() {
             <p className="text-lg font-semibold text-gray-900">{fraud?.risk_level ?? "—"}</p>
           </div>
         </div>
+        {fraud?.ai_reason && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-xs font-semibold text-red-600 uppercase tracking-wide">
+              AI Analysis
+            </p>
+            <p className="text-sm text-red-700 mt-1">{fraud.ai_reason}</p>
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -2,6 +2,7 @@ import { Sidebar } from "./components/Sidebar";
 import { TopNavbar } from "./components/TopNavbar";
 import { DashboardCards } from "./components/DashboardCards";
 import { AIRecommendations } from "./components/AIRecommendations";
+import { RiskPredictionCard } from "./components/RiskPredictionCard";
 import { ClaimButton } from "./components/ClaimButton";
 import {
   RiskTrendAnalytics,
@@ -30,9 +31,12 @@ export default function App() {
             <DashboardCards />
           </section>
 
-          {/* MIDDLE SECTION: AI Recommendations */}
+          {/* MIDDLE SECTION: AI Recommendations & Risk Prediction */}
           <section>
-            <AIRecommendations />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <AIRecommendations />
+              <RiskPredictionCard />
+            </div>
           </section>
 
           {/* CLAIM & ACTION SECTION */}

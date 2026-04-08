@@ -6,7 +6,7 @@ import { ClaimAnalysisCard } from "./ClaimAnalysisCard";
 type ClaimAnalysis = {
   claim_id: string;
   fraud_risk: number;
-  claim_decision: string;
+  decision: string;
   ai_analysis: string;
 };
 
@@ -26,7 +26,7 @@ export function ClaimButton() {
       setClaimAnalysis({
         claim_id: response.claim_id || "CLM-0000",
         fraud_risk: response.fraud_risk || 0,
-        claim_decision: response.claim_decision || "Pending",
+        decision: response.decision || "Pending",
         ai_analysis: response.ai_analysis || "Processing...",
       });
 
