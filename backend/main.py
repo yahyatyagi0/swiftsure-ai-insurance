@@ -20,8 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client (only if API key is available)
+client = None
+if os.getenv("OPENAI_API_KEY"):
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class ClaimRequest(BaseModel):
     amount: float
@@ -29,6 +31,9 @@ class ClaimRequest(BaseModel):
 
 def call_ai_service(prompt: str) -> str:
     """Call OpenAI API with the given prompt."""
+    if not client:
+        return "AI analysis unavailable. Using fallback logic."
+    
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
