@@ -2,8 +2,8 @@ import { Search, Bell, User } from 'lucide-react';
 
 export function TopNavbar() {
   return (
-    <div className="bg-white border-b border-gray-200 h-16 fixed top-0 right-0 left-64 z-10">
-      <div className="h-full px-6 flex items-center justify-between">
+    <div className="bg-white border-b border-gray-200 h-16 fixed top-0 right-0 left-0 lg:left-64 z-10">
+      <div className="h-full px-4 sm:px-6 lg:px-6 flex items-center justify-between">
         {/* Search Bar */}
         <div className="flex-1 max-w-xl">
           <div className="relative">

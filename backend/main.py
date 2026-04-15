@@ -4,8 +4,11 @@ from pydantic import BaseModel
 import random
 import time
 import os
+import json
+from typing import Optional, Dict, Any
 from openai import OpenAI
 from dotenv import load_dotenv
+import httpx
 
 load_dotenv()
 
@@ -22,12 +25,14 @@ app.add_middleware(
 
 # Initialize OpenAI client (only if API key is available)
 client = None
-if os.getenv("OPENAI_API_KEY"):
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_key = os.getenv("OPENAI_API_KEY")
+if openai_key:
+    client = OpenAI(api_key=openai_key.strip())
 
 class ClaimRequest(BaseModel):
     amount: float
     description: str
+    trigger_reason: Optional[str] = None
 
 def call_ai_service(prompt: str) -> str:
     """Call OpenAI API with the given prompt."""
@@ -38,16 +43,120 @@ def call_ai_service(prompt: str) -> str:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are an AI assistant for an insurance company analyzing worker risk data. Provide concise, professional responses."},
+                {"role": "system", "content": "You are an AI assistant for an insurance company analyzing worker risk data. Provide concise, professional responses in valid JSON format."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=200,
-            temperature=0.7
+            max_tokens=220,
+            temperature=0.2
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"AI service error: {e}")
         return "AI analysis unavailable. Using fallback logic."
+
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY") or os.getenv("WEATHER_KEY")
+WEATHER_CITY = (os.getenv("WEATHER_CITY") or os.getenv("WEATHER_LOCATION") or "Delhi").strip()
+
+def fetch_weather_data(city: str = WEATHER_CITY) -> Dict[str, Any]:
+    """Fetch current weather from OpenWeather API."""
+    if not WEATHER_API_KEY:
+        print("Weather API key is not configured.")
+        return {
+            "rainfall_mm": 0.0,
+            "temperature": 0.0,
+            "condition": "Unavailable",
+            "raw": {},
+            "available": False,
+        }
+
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "q": city,
+        "appid": WEATHER_API_KEY,
+        "units": "metric"
+    }
+
+    try:
+        with httpx.Client(timeout=10.0) as client_http:
+            response = client_http.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+        rainfall_mm = 0.0
+        if isinstance(data.get("rain"), dict):
+            rainfall_mm = float(data["rain"].get("1h", data["rain"].get("3h", 0.0)))
+
+        temperature = float(data.get("main", {}).get("temp", 0.0))
+        condition = "Unknown"
+        weather = data.get("weather")
+        if isinstance(weather, list) and weather:
+            condition = weather[0].get("main", "Unknown")
+
+        return {
+            "rainfall_mm": round(rainfall_mm, 1),
+            "temperature": round(temperature, 1),
+            "condition": condition,
+            "raw": data,
+            "available": True,
+        }
+    except Exception as exc:
+        print(f"Weather API fetch error: {exc}")
+        return {
+            "rainfall_mm": 0.0,
+            "temperature": 0.0,
+            "condition": "Unavailable",
+            "raw": {},
+            "available": False,
+        }
+
+
+def process_claim(amount: float, description: str, trigger_reason: Optional[str] = None) -> Dict[str, Any]:
+    """Centralized claim process logic used by endpoints and auto triggers."""
+    time.sleep(1)
+    activity_hours = random.uniform(20, 80)
+    claim_history = random.uniform(0, 50)
+    fraud_probability = random.uniform(5, 45)
+
+    prompt = f"""
+Analyze this claim and decide approval. Return JSON with:
+fraud_risk (number 0-100), decision (Approved/Rejected/Under Review), ai_analysis (string).
+
+Claim details:
+- Amount: ${amount}
+- Description: {description}
+- Trigger reason: {trigger_reason or 'Manual submission'}
+- Worker activity hours: {activity_hours:.1f}
+- Claim history: {claim_history:.1f}
+- Fraud indicators: {fraud_probability:.1f}
+
+Return only valid JSON, no extra text.
+"""
+
+    ai_response = call_ai_service(prompt)
+    try:
+        result = json.loads(ai_response)
+        fraud_risk = float(result.get("fraud_risk", fraud_probability))
+        decision = result.get("decision", "Under Review")
+        ai_analysis = result.get("ai_analysis", "AI analysis completed.")
+    except Exception:
+        fraud_risk = fraud_probability
+        if fraud_risk > 65 or amount > 50000:
+            decision = "Rejected"
+            ai_analysis = "High fraud probability detected based on historical claim patterns and amount."
+        elif fraud_risk > 30:
+            decision = "Under Review"
+            ai_analysis = "Claim flagged for manual review due to moderate risk indicators."
+        else:
+            decision = "Approved"
+            ai_analysis = "Claim aligns with standard parameters. Low fraud risk."
+
+    return {
+        "claim_id": f"CLM-{random.randint(1000, 9999)}",
+        "fraud_risk": round(fraud_risk, 1),
+        "decision": decision,
+        "ai_analysis": ai_analysis,
+        "trigger_reason": trigger_reason,
+    }
 
 @app.get("/worker-profile")
 def get_worker_profile():
@@ -210,56 +319,95 @@ def get_worker_activity():
 
 @app.post("/submit-claim")
 def submit_claim(claim: ClaimRequest):
-    # Simulate AI analysis delay
-    time.sleep(1) 
-    
-    # Generate sample data
-    activity_hours = random.uniform(20, 80)
-    claim_history = random.uniform(0, 50)
-    fraud_probability = random.uniform(5, 45)
-    
-    # Call AI for claim decision
-    prompt = f"""
-Analyze this claim and decide approval. Return JSON with:
-fraud_risk (number 0-100), decision (Approved/Rejected/Under Review), ai_analysis (string).
+    result = process_claim(claim.amount, claim.description, claim.trigger_reason)
+    return result
 
-Claim details:
-- Amount: ${claim.amount}
-- Description: {claim.description}
-- Worker activity hours: {activity_hours:.1f}
-- Claim history: {claim_history:.1f}
-- Fraud indicators: {fraud_probability:.1f}
+@app.get("/parametric-check")
+def parametric_check():
+    weather = fetch_weather_data()
+    weather_available = weather.get("available", True)
+    rainfall = weather.get("rainfall_mm", 0.0)
+    temp = weather.get("temperature", 0.0)
+    condition = weather.get("condition", "Unknown")
+    triggered = False
+    trigger_type = "Normal"
+    trigger_value = 0.0
+    threshold = 0.0
+    status = "Normal"
+    action = "No Action Needed"
+    trigger_reason = None
 
-Return only valid JSON, no extra text.
-"""
-    
-    ai_response = call_ai_service(prompt)
-    
-    try:
-        import json
-        result = json.loads(ai_response)
-        fraud_risk = float(result.get('fraud_risk', fraud_probability))
-        decision = result.get('decision', 'Under Review')
-        ai_analysis = result.get('ai_analysis', 'AI analysis completed.')
-    except:
-        # Fallback logic
-        fraud_risk = fraud_probability
-        if fraud_risk > 65 or claim.amount > 50000:
-            decision = "Rejected"
-            ai_analysis = "High fraud probability detected based on historical claim patterns and amount."
-        elif fraud_risk > 30:
-            decision = "Under Review"
-            ai_analysis = "Claim flagged for manual review due to moderate risk indicators."
-        else:
-            decision = "Approved"
-            ai_analysis = "Claim aligns with standard parameters. Low fraud risk."
+    if not weather_available:
+        return {
+            "triggered": False,
+            "condition": "Unavailable",
+            "value": 0.0,
+            "threshold": 0.0,
+            "status": "Unavailable",
+            "action": "No Action Needed",
+            "weather": {
+                "temperature": temp,
+                "rainfall_mm": rainfall,
+                "condition": condition,
+            },
+            "ai_insight": "Weather data unavailable. Configure WEATHER_API_KEY in backend/.env.",
+            "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
-    return {
-        "claim_id": f"CLM-{random.randint(1000, 9999)}",
-        "fraud_risk": round(fraud_risk, 1),
-        "decision": decision,
-        "ai_analysis": ai_analysis
+    if rainfall > 50.0:
+        triggered = True
+        trigger_type = "Rainfall"
+        trigger_value = rainfall
+        threshold = 50.0
+        status = "Triggered"
+        action = "Claim Auto-Processed"
+        trigger_reason = f"Heavy rainfall detected at {rainfall} mm"
+    elif temp > 40.0:
+        triggered = True
+        trigger_type = "Heatwave"
+        trigger_value = temp
+        threshold = 40.0
+        status = "Triggered"
+        action = "Claim Auto-Processed"
+        trigger_reason = f"Extreme heat detected at {temp} °C"
+    elif temp < 5.0:
+        triggered = True
+        trigger_type = "Coldwave"
+        trigger_value = temp
+        threshold = 5.0
+        status = "Triggered"
+        action = "Claim Auto-Processed"
+        trigger_reason = f"Coldwave detected at {temp} °C"
+
+    response = {
+        "triggered": triggered,
+        "condition": trigger_type,
+        "value": trigger_value,
+        "threshold": threshold,
+        "status": status,
+        "action": action,
+        "weather": {
+            "temperature": temp,
+            "rainfall_mm": rainfall,
+            "condition": condition,
+        },
+        "ai_insight": "AI Insight: Monitoring weather conditions for parametric triggers.",
+        "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
+
+    if triggered:
+        claim_payload = process_claim(
+            amount=25000.0,
+            description=f"Auto parametric claim due to {trigger_type}.",
+            trigger_reason=trigger_reason,
+        )
+        response["claim_id"] = claim_payload["claim_id"]
+        response["decision"] = claim_payload["decision"]
+        response["claim_ai_analysis"] = claim_payload["ai_analysis"]
+        response["reason"] = trigger_reason
+        response["fraud_risk"] = claim_payload["fraud_risk"]
+
+    return response
 
 @app.get("/risk-trend")
 def get_risk_trend():

@@ -3,6 +3,7 @@ import { TopNavbar } from "./components/TopNavbar";
 import { DashboardCards } from "./components/DashboardCards";
 import { AIRecommendations } from "./components/AIRecommendations";
 import { RiskPredictionCard } from "./components/RiskPredictionCard";
+import { ParametricCard } from "./components/ParametricCard";
 import { ClaimButton } from "./components/ClaimButton";
 import {
   RiskTrendAnalytics,
@@ -29,6 +30,11 @@ export default function App() {
           {/* TOP SECTION: Worker Profile, Risk Score, Safety Score */}
           <section>
             <DashboardCards />
+          </section>
+
+          {/* PARAMETRIC MONITORING */}
+          <section>
+            <ParametricCard />
           </section>
 
           {/* MIDDLE SECTION: AI Recommendations & Risk Prediction */}
@@ -71,7 +77,7 @@ export default function App() {
 
           {/* Footer info */}
           <footer className="text-center text-xs text-gray-500 pt-4">
-            <p>SwiftSure Phase 2 • AI-Powered Insurance Risk Intelligence</p>
+            <p>SwiftSure • AI-Powered Insurance Risk Intelligence</p>
           </footer>
         </div>
       </main>

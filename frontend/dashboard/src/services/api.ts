@@ -1,29 +1,37 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "https://swiftsure-ai-insurance.onrender.com";
 
-export async function getWorkerProfile() {
-  const res = await fetch(`${API_BASE}/worker-profile`);
+async function fetchJson(endpoint: string) {
+  const res = await fetch(`${API_BASE}${endpoint}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `${res.status} ${res.statusText}`);
+  }
   return res.json();
+}
+
+export async function getWorkerProfile() {
+  return fetchJson("/worker-profile");
 }
 
 export async function getRiskScore() {
-  const res = await fetch(`${API_BASE}/risk-score`);
-  return res.json();
+  return fetchJson("/risk-score");
 }
 
 export async function getFraudCheck() {
-  const res = await fetch(`${API_BASE}/fraud-check`);
-  return res.json();
+  return fetchJson("/fraud-check");
 }
 
 export async function getAiRecommendations() {
-  const res = await fetch(`${API_BASE}/ai-recommendations`);
-  return res.json();
+  return fetchJson("/ai-recommendations");
 }
 
 export async function getRiskPrediction() {
-  const res = await fetch(`${API_BASE}/risk-prediction`);
-  return res.json();
+  return fetchJson("/risk-prediction");
+}
+
+export async function getParametricCheck() {
+  return fetchJson("/parametric-check");
 }
 
 export async function submitClaim(amount: number = 5000, description: string = "Insurance claim") {
@@ -32,12 +40,15 @@ export async function submitClaim(amount: number = 5000, description: string = "
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ amount, description }),
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `${res.status} ${res.statusText}`);
+  }
   return res.json();
 }
 
 export async function getRiskTrendData() {
-  const res = await fetch(`${API_BASE}/risk-trend`);
-  return res.json();
+  return fetchJson("/risk-trend");
 }
 
 export async function getWorkerActivityData() {

@@ -20,7 +20,7 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0">
+    <div className="hidden lg:flex w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex-col overflow-y-auto">
       {/* Logo */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-2">

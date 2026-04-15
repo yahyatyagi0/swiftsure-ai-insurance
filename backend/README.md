@@ -20,6 +20,8 @@ pip install -r requirements.txt
 2. Create `.env` file:
 ```bash
 OPENAI_API_KEY=your_openai_api_key_here
+WEATHER_API_KEY=your_openweather_api_key_here
+WEATHER_CITY=Delhi
 ```
 
 3. Run locally:
@@ -38,6 +40,8 @@ uvicorn main:app --reload
 ### Environment Variables
 
 - `OPENAI_API_KEY`: Your OpenAI API key (optional - app works with fallbacks)
+- `WEATHER_API_KEY`: Your OpenWeather API key (required for parametric monitoring)
+- `WEATHER_CITY`: City used for weather monitoring (default: Delhi)
 
 ## API Endpoints
 
